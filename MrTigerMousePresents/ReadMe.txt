@@ -2,4 +2,4 @@ Bugs:
 - High scores overwrite half the time even if it's not a new high score.
 
 To Do:
-- Power ups
+- Graphics? (opengl)

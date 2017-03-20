@@ -1,6 +1,8 @@
 ﻿//\  /\ McClain Jorgensen
 //\\//\\ The fantastic Mr. Foronzo De Feu (tiger mouse) presents... Raven's Deep
 
+#include "src\graphics\window.h"
+#include <GLFW\glfw3.h>
 #include <iostream>
 #include <conio.h>
 #include <iomanip>
@@ -15,7 +17,7 @@
 
 using namespace std;
 
-const string VERSION = "1.3 WIP";
+const string VERSION = "1.3.1";
 
 // Tiles
 const char TILE = 177; // Ew, global :(
@@ -100,15 +102,14 @@ bool fight_check(char world[][25], const int ROWS, const int COLS, int playerRow
 	for (int i = playerRow - 1; i <= playerRow + 1; i++) { // Check in a 3 by 3 grid around the player for an enemy.
 		while (i < 0)
 			i++;
-		while (i > ROWS - 1)
-			i--;
-		for (int j = playerCol - 1; j <= playerCol + 1; j++) {
-			while (j < 0)
-				j++;
-			while (j > COLS - 1)
-				j--;
-			if ((world[i][j] == ENEMY) || (world[i][j] == ENEMYMOVED)) {
-				return true;
+		if (i < ROWS) {
+			for (int j = playerCol - 1; j <= playerCol + 1; j++) {
+				while (j < 0)
+					j++;
+				if (j < COLS) {
+					if ((world[i][j] == ENEMY) || (world[i][j] == ENEMYMOVED))
+						return true;
+				}
 			}
 		}
 	}
@@ -364,7 +365,7 @@ void powUpSpawner(char world[][25], const int ROWS, const int COLS, const char P
 	world[powUpRow][powUpCol] = POWUP;
 }
 
-int main() {
+void gameProcess() {
 	bool gameOver = false;
 	int level = 0;
 	bool isNewLevel = false;
@@ -403,12 +404,12 @@ int main() {
 
 	/*
 	for (int i = 0; i < ROWS; i++) {
-		for (int j = 0; j < COLS; j++) {
-			
-		}
+	for (int j = 0; j < COLS; j++) {
+
+	}
 	}
 	*/
-	
+
 	long long int lol = 7777777;
 	int key = 0;
 	int stabSpeed = 230;
@@ -889,9 +890,9 @@ int main() {
 				}
 				break;
 			case 'd':
-				if (playerCol + 1 >= 0) {
+				if (playerCol + 1 < COLS) {
 					world[playerRow][playerCol + 1] = '-';
-					if (playerCol + 2 >= 0) {
+					if (playerCol + 2 < COLS) {
 						world[playerRow][playerCol + 2] = '>';
 						output_world(ROWS, COLS, world, health, hp, MAXHP, level);
 						Sleep(stabSpeed);
@@ -957,10 +958,10 @@ int main() {
 				lngSprCountdown--;
 			}
 
-			int expld_chance = rand() % 20; // Explosion power-up spawn chance; 1 in 20
-			int lngSpr_chance = rand() % 10; // Long spear power-up spawn chance; 1 in 10
+			int expld_chance = rand() % 18; // Explosion power-up spawn chance; 1 in 18
+			int lngSpr_chance = rand() % 8; // Long spear power-up spawn chance; 1 in 8
 
-			// Power-up spawn conditions
+											 // Power-up spawn conditions
 			if (expld_chance == 7) {
 				powUpSpawner(world, ROWS, COLS, POWUP_EXPLD);
 			}
@@ -1013,6 +1014,18 @@ int main() {
 			gameOver = true;
 		}
 	}
+}
+
+int main() {
+	/*using namespace graphics;
+
+	Window window("Raven's Deep", 1280, 720);
+
+	while (!window.closed()) {
+		window.update();
+	}*/
+
+	gameProcess();
 	
 	return 0;
 }
