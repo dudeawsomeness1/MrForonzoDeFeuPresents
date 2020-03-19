@@ -10,6 +10,9 @@
 #include <fstream>
 #include <string>
 
+#define WORLD_ROWS 25
+#define WORLD_COLS 25
+
 #define KEY_UP 72
 #define KEY_DOWN 80
 #define KEY_LEFT 75
@@ -33,17 +36,110 @@ void setColor(unsigned short color) {
 	SetConsoleTextAttribute(hcon, color);
 }
 
-void output_world(const int ROWS, const int COLS, char world[][25], char healthPoints[], int hp, const int MAXHP, int level) {
+void gotoXY(int column, int line)
+{
+	COORD coord;
+	coord.X = column;
+	coord.Y = line;
+	SetConsoleCursorPosition(
+		GetStdHandle(STD_OUTPUT_HANDLE),
+		coord
+	);
+}
+
+void update_screen(const int ROWS, const int COLS, char world[][WORLD_COLS], char healthPoints[], int hp, const int MAXHP, int level) { // WIP
+	gotoXY(7, 0); // Level: _
+	cout << level;
+
+	// Output health
+	gotoXY(4, 1); // HP: _
+	if (hp > MAXHP) { // doesn't allow hp to exceed max and go out of bounds. Doesn't change the actual hp though.
+		hp = MAXHP;
+	}
+
+	for (int i = 0; i < hp; i++) {
+		setColor(10); // Green
+		cout << healthPoints[i];
+	}
+	for (int i = hp; i < MAXHP; i++) {
+		setColor(12); // Red
+		cout << healthPoints[i];
+	}
+	setColor(15);
+	cout << endl;
+
+	// Check for differences and update them.
+	char temp;
+
+	for (int i = 0; i < ROWS; i++) {
+		int j = 0;
+		temp = _getch();
+		do {
+			if (temp != world[i][j]) { // if char at (j, i) is different than what is on screen update it.
+				if (world[i][j] == POWUP_EXPLD) {
+					setColor(6);
+					cout << world[i][j];
+				}
+				else if (world[i][j] == POWUP_LNGSPR) {
+					setColor(11);
+					cout << world[i][j];
+				}
+				else if ((world[i][j] == -37) || (world[i][j] == '#')) {
+					setColor(12); // Red
+					cout << world[i][j];
+				}
+				else {
+					setColor(15);
+					cout << world[i][j];
+				}
+			}
+
+			temp = _getch();
+			j++;
+		} while (temp != '\n');
+	}
+
+	//for (int i = 0; i < ROWS; i++) {
+	//	for (int j = 0; j < COLS; j++) {
+	//		gotoXY(j, i + 2);
+	//		for (int boi = 0; boi < ROWS; boi++) {
+	//			temp = _getch();
+	//		}
+	//		
+	//		if (temp != world[i][j]) { // if char at (j, i) is different than what is on screen update it.
+	//			gotoXY(j, i + 2);
+	//			if (world[i][j] == POWUP_EXPLD) {
+	//				setColor(6);
+	//				cout << world[i][j];
+	//			}
+	//			else if (world[i][j] == POWUP_LNGSPR) {
+	//				setColor(11);
+	//				cout << world[i][j];
+	//			}
+	//			else if ((world[i][j] == -37) || (world[i][j] == '#')) {
+	//				setColor(12); // Red
+	//				cout << world[i][j];
+	//			}
+	//			else {
+	//				setColor(15);
+	//				cout << world[i][j];
+	//			}
+	//		}
+	//	}
+	//}
+}
+
+void output_world(const int ROWS, const int COLS, char world[][WORLD_COLS], char healthPoints[], int hp, const int MAXHP, int level) {
 	system("CLS"); // Clear screen
 
-	cout << "level: " << level << endl;
+	cout << "Level: " << level << endl;
 
 	// Output health
 	if (hp > MAXHP) { // doesn't allow hp to exceed max and go out of bounds. Doesn't change the actual hp though.
 		hp = MAXHP;
 	}
 
-	cout << "hp: ";
+	cout << "HP: ";
 	for (int i = 0; i < hp; i++) {
 		setColor(10); // Green
 		cout << healthPoints[i];
@@ -80,7 +176,7 @@ void output_world(const int ROWS, const int COLS, char world[][25], char healthP
 }
 
 // Checks if an "object" is already in that row and column.
-bool occupied(char world[][25], int row, int col) {
+bool occupied(char world[][WORLD_COLS], int row, int col) {
 	if ((world[row][col] == ENEMY) || (world[row][col] == PLAYER) || (world[row][col] == ENEMYMOVED) || (world[row][col] == POWUP_EXPLD) || (world[row][col] == POWUP_LNGSPR)) {
 		return true;
 	}
@@ -98,7 +194,7 @@ bool isInWorldBounds(int row, int col, const int ROWS, const int COLS) {
 	return true;
 }
 
-bool fight_check(char world[][25], const int ROWS, const int COLS, int playerRow, int playerCol) {
+bool fight_check(char world[][WORLD_COLS], const int ROWS, const int COLS, int playerRow, int playerCol) {
 	for (int i = playerRow - 1; i <= playerRow + 1; i++) { // Check in a 3 by 3 grid around the player for an enemy.
 		while (i < 0)
 			i++;
@@ -117,7 +213,7 @@ bool fight_check(char world[][25], const int ROWS, const int COLS, int playerRow
 }
 
 // Gets the coordinates of the player.
-void player_finder(const int ROWS, const int COLS, char world[][25], int& playerRow, int& playerCol) {
+void player_finder(const int ROWS, const int COLS, char world[][WORLD_COLS], int& playerRow, int& playerCol) {
 	for (int i = 0; i < ROWS; i++) {
 		for (int j = 0; j < COLS; j++) {
 			if (world[i][j] == PLAYER) {
@@ -128,7 +224,7 @@ void player_finder(const int ROWS, const int COLS, char world[][25], int& player
 	}
 }
 
-void path_find(char world[][25], const int ROWS, const int COLS, int& enemyRow, int& enemyCol, int prevEnemyRow, int prevEnemyCol) {
+void path_find(char world[][WORLD_COLS], const int ROWS, const int COLS, int& enemyRow, int& enemyCol, int prevEnemyRow, int prevEnemyCol) {
 	if (occupied(world, enemyRow, enemyCol)) {
 		for (int i = prevEnemyRow - 1; i < prevEnemyRow + 1; i++) { // check for a free spot around the original position
 			for (int j = prevEnemyCol - 1; j < prevEnemyCol + 1; j++) {
@@ -145,7 +241,7 @@ void path_find(char world[][25], const int ROWS, const int COLS, int& enemyRow, 
 	}
 }
 
-void reset_moved_enemies(char world[][25], const int ROWS, const int COLS) {
+void reset_moved_enemies(char world[][WORLD_COLS], const int ROWS, const int COLS) {
 	for (int i = 0; i < ROWS; i++) { // Reset moved enemies
 		for (int j = 0; j < COLS; j++) {
 			if (world[i][j] == ENEMYMOVED) {
@@ -155,7 +251,7 @@ void reset_moved_enemies(char world[][25], const int ROWS, const int COLS) {
 	}
 }
 
-void enemy_ai(char world[][25], const int ROWS, const int COLS, int& hp, char healthPoints[], const int MAXHP, int level) {
+void enemy_ai(char world[][WORLD_COLS], const int ROWS, const int COLS, int& hp, char healthPoints[], const int MAXHP, int level) {
 	int playerRow = 0;
 	int playerCol = 0;
 	int enemyRow = 0;
@@ -240,7 +336,7 @@ void enemy_ai(char world[][25], const int ROWS, const int COLS, int& hp, char he
 	}
 }
 
-void wave(int& level, char world[][25], const int ROWS, const int COLS, bool& newLevel) { // contains enemy spawning
+void wave(int& level, char world[][WORLD_COLS], const int ROWS, const int COLS, bool& newLevel) { // contains enemy spawning
 	int enemyCount = 0; // for checking if there are no enemies
 
 	for (int i = 0; i < ROWS; i++) { // counts the enemies in the world.
@@ -351,7 +447,7 @@ void wave(int& level, char world[][25], const int ROWS, const int COLS, bool& ne
 	}
 }
 
-void powUpSpawner(char world[][25], const int ROWS, const int COLS, const char POWUP) {
+void powUpSpawner(char world[][WORLD_COLS], const int ROWS, const int COLS, const char POWUP) {	/////// Happy 4/20! 2018
 	// generate random row and col
 	int powUpRow = rand() % ROWS;
 	int powUpCol = rand() % COLS;
@@ -372,18 +468,18 @@ void gameProcess() {
 
 	bool hasPowUp_Expld = false;
 	bool hasPowUp_LngSpr = false;
-	// level countdowns
+	/// level countdowns
 	int expldCountdown = 2;
 	int lngSprCountdown = 2;
 
-	const int X = 7;
-	const int Y = 7;
-	const int Z = 7;
-	const int W = 7; // Spissitude
-	int MobiusWhale[X][Y][Z][W]; // A fourth dimensional whale. "I can see sideways in time!"
+	//const int X = 7;
+	//const int Y = 7;
+	//const int Z = 7;
+	//const int W = 7; // Spissitude
+	//int MobiusWhale[X][Y][Z][W]; // A fourth dimensional whale. "I can see sideways in time!"
 
-	const int ROWS = 25;
-	const int COLS = 25;
+	const int ROWS = WORLD_ROWS;
+	const int COLS = WORLD_COLS;
 	char world[ROWS][COLS];
 
 	int playerRow = 0;
@@ -402,15 +498,7 @@ void gameProcess() {
 		}
 	}
 
-	/*
-	for (int i = 0; i < ROWS; i++) {
-	for (int j = 0; j < COLS; j++) {
-
-	}
-	}
-	*/
-
-	long long int lol = 7777777;
+	//long long int lol = 7777777;
 	int key = 0;
 	int stabSpeed = 230;
 
@@ -432,6 +520,8 @@ void gameProcess() {
 	cout << "Use the arrow keys to move. WASD to spear (in the respective direction)." << endl;
 	cout << "Get ready freddy!" << endl;
 	system("pause");
+
+	output_world(ROWS, COLS, world, health, hp, MAXHP, level);
 
 	while (!gameOver) {
 		isNewLevel = false;
@@ -979,12 +1069,9 @@ void gameProcess() {
 
 			ifstream highScores_In;
 			highScores_In.open("High Scores.txt");
-
 			// Check for error
-			if (highScores_In.fail()) {
-				cerr << "Error opening file." << endl;
-				exit(1);
-			}
+			if (highScores_In.fail())
+				cerr << "Error opening high score file." << endl;
 
 			int score = 0;
 
@@ -992,7 +1079,7 @@ void gameProcess() {
 			highScores_In.close();
 
 			ofstream highScores_Out;
-			highScores_Out.open("High Scores.txt", ios_base::trunc);
+			highScores_Out.open("High Scores.txt");
 
 			if (highScores_Out.is_open()) {
 
@@ -1002,13 +1089,14 @@ void gameProcess() {
 					cout << "High score: " << level - 1;
 				}
 				else {
+					highScores_Out << score;
 					cout << "High score: " << score;
 				}
 
 				highScores_Out.close();
 			}
 			else {
-				cout << "\nUnable to open high score file." << endl;
+				cerr << "\nUnable to open high score file." << endl;
 			}
 
 			gameOver = true;
