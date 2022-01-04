@@ -1,4 +1,4 @@
-﻿//\  /\ McClain Jorgensen
+﻿//\  /\	McClain Jorgensen
 //\\//\\ The fantastic Mr. Foronzo De Feu (tiger mouse) presents... Raven's Deep
 
 #include "src\graphics\window.h"
@@ -18,19 +18,21 @@
 #define KEY_LEFT 75
 #define KEY_RIGHT 77
 
+#define VERSION "1.3.1"
+
 using namespace std;
 
-const string VERSION = "1.3.1";
+//const string VERSION = "1.3.1";
 
 // Tiles
 const char TILE = 177; // Ew, global :(
 const char PLAYER = '$';
 const char ENEMY = 157;
 const char ENEMYMOVED = 158;
-const char POWUP_EXPLD = '@'; // Explosion all around the player
-const char POWUP_LNGSPR = '\\'; // Double length spear
+const char POWUP_EXPLD = '@';	// Explosion all around the player
+const char POWUP_LNGSPR = '\\';	// Double length spear
 
-// 15 = white.
+// 15 = white
 void setColor(unsigned short color) {
 	HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hcon, color);
